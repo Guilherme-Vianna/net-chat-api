@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tags {
+  id         String      @id @default(uuid()) @db.Uuid
+  name       String
+  is_deleted Boolean     @default(false)
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  UsersTags  UsersTags[]
+
+  @@unique([name])
+  @@map("tags")
+}
+
+model UsersTags {
+  id String @id @default(uuid()) @db.Uuid
+
+  user_id String @db.Uuid
+  user    Users  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  tag_id String @db.Uuid
+  tag    Tags   @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, tag_id])
+  @@index([user_id])
+  @@index([tag_id])
+  @@map("users_tags")
+}
+
+model Messages {
+  id String @id @default(uuid()) @db.Uuid
+
+  user_id String @db.Uuid
+  sender  Users  @relation("SentMessages", fields: [user_id], references: [id], onDelete: Cascade)
+
+  recipient_id String @db.Uuid
+  recipient    Users  @relation("ReceivedMessages", fields: [recipient_id], references: [id], onDelete: Cascade)
+
+  text       String
+  is_deleted Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([user_id])
+  @@index([recipient_id])
+  @@map("messages")
+}
+
+model Users {
+  id            String @id @default(uuid()) @db.Uuid
+  email         String @unique
+  password_hash String
+  name          String
+
+  sentMessages     Messages[]  @relation("SentMessages")
+  receivedMessages Messages[]  @relation("ReceivedMessages")
+  UsersTags        UsersTags[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+
+  @@map("users")
+}
