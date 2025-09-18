@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../user/dto/create-user-dto';
 import { UpdateUserDto } from '../user/dto/update-user-dto';
 
@@ -62,8 +62,13 @@ export class UserRepositoryService {
   }
 
   async getByEmailOrUsername(emailOrUsername: string): Promise<any | null> {
-    const search = await this.prismaService.users.findUnique({
-      where: { email: emailOrUsername, name: emailOrUsername },
+    const search = await this.prismaService.users.findFirst({
+      where: {
+        OR: [
+          { email: { contains: emailOrUsername } },
+          { name: { startsWith: emailOrUsername } },
+        ],
+      },
       select: {
         password_hash: true,
       },
