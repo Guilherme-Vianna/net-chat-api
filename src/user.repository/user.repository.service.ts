@@ -1,18 +1,26 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../user/dto/create-user-dto';
 import { UpdateUserDto } from '../user/dto/update-user-dto';
+import { Prisma } from 'generated/prisma';
+
+type UserSelect = Prisma.UsersGetPayload<{
+  select: {
+    id: true;
+    email: true;
+    name: true;
+    password_hash: false;
+    created_at: true;
+    updated_at: true;
+  };
+}>;
 
 @Injectable()
 export class UserRepositoryService {
   constructor(readonly prismaService: PrismaService) {}
 
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserDto): Promise<UserSelect> {
     const email = dto.email.toLowerCase().trim();
 
     const existing = await this.prismaService.users.findUnique({
@@ -30,28 +38,14 @@ export class UserRepositoryService {
         password_hash,
         name: dto.username,
       },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        created_at: true,
-        updated_at: true,
-      },
     });
 
     return user;
   }
 
-  async getById(id: string): Promise<any | null> {
+  async getById(id: string): Promise<UserSelect | null> {
     const search = await this.prismaService.users.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        created_at: true,
-        updated_at: true,
-      },
     });
 
     if (!search) {
@@ -61,7 +55,9 @@ export class UserRepositoryService {
     return search;
   }
 
-  async getByEmailOrUsername(emailOrUsername: string): Promise<any | null> {
+  async getByEmailOrUsername(
+    emailOrUsername: string,
+  ): Promise<UserSelect | null> {
     const search = await this.prismaService.users.findFirst({
       where: {
         OR: [
@@ -69,9 +65,6 @@ export class UserRepositoryService {
           { name: { startsWith: emailOrUsername } },
         ],
       },
-      select: {
-        password_hash: true,
-      },
     });
 
     if (!search) {
@@ -81,21 +74,12 @@ export class UserRepositoryService {
     return search;
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<any> {
+  async update(id: string, dto: UpdateUserDto): Promise<any | null> {
     const password_hash = await bcrypt.hash(dto.password, 12);
 
-    const updatedUser = await this.prismaService.users.update({
+    return this.prismaService.users.update({
       where: { id },
       data: { email: dto.email, password_hash },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        created_at: true,
-        updated_at: true,
-      },
     });
-
-    return updatedUser;
   }
 }
