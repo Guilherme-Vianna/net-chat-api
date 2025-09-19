@@ -3,24 +3,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../user/dto/create-user-dto';
 import { UpdateUserDto } from '../user/dto/update-user-dto';
-import { Prisma } from 'generated/prisma';
-
-type UserSelect = Prisma.UsersGetPayload<{
-  select: {
-    id: true;
-    email: true;
-    name: true;
-    password_hash: false;
-    created_at: true;
-    updated_at: true;
-  };
-}>;
+import { UserDto } from '../types/UserDto';
 
 @Injectable()
 export class UserRepositoryService {
   constructor(readonly prismaService: PrismaService) {}
 
-  async createUser(dto: CreateUserDto): Promise<UserSelect> {
+  async createUser(dto: CreateUserDto): Promise<UserDto> {
     const email = dto.email.toLowerCase().trim();
 
     const existing = await this.prismaService.users.findUnique({
@@ -43,7 +32,7 @@ export class UserRepositoryService {
     return user;
   }
 
-  async getById(id: string): Promise<UserSelect | null> {
+  async getById(id: string): Promise<UserDto | null> {
     const search = await this.prismaService.users.findUnique({
       where: { id },
     });
@@ -55,9 +44,7 @@ export class UserRepositoryService {
     return search;
   }
 
-  async getByEmailOrUsername(
-    emailOrUsername: string,
-  ): Promise<UserSelect | null> {
+  async getByEmailOrUsername(emailOrUsername: string): Promise<UserDto | null> {
     const search = await this.prismaService.users.findFirst({
       where: {
         OR: [
@@ -74,7 +61,7 @@ export class UserRepositoryService {
     return search;
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<any | null> {
+  async update(id: string, dto: UpdateUserDto): Promise<UserDto> {
     const password_hash = await bcrypt.hash(dto.password, 12);
 
     return this.prismaService.users.update({
