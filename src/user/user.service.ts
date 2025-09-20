@@ -3,6 +3,7 @@ import { UserRepositoryService } from '../user.repository/user.repository.servic
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user-dto';
 import { UserDto } from '../types/UserDto';
+import { UserViewDto } from 'src/types/UserViewDto';
 
 @Injectable()
 export class UserService {
@@ -12,10 +13,10 @@ export class UserService {
     return this.repository.createUser(dto);
   }
 
-  async getById(id: string): Promise<UserDto> {
+  async getById(id: string): Promise<UserViewDto> {
     const user = await this.repository.getById(id);
     if (user == null) throw new NotFoundException('User not found');
-    return user;
+    return new UserViewDto(user);
   }
 
   async getByEmailOrUsername(emailOrUsername: string): Promise<UserDto> {
@@ -24,7 +25,8 @@ export class UserService {
     return user;
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<UserDto> {
-    return await this.repository.update(id, dto);
+  async update(id: string, dto: UpdateUserDto): Promise<UserViewDto> {
+    const result = await this.repository.update(id, dto);
+    return new UserViewDto(result);
   }
 }
