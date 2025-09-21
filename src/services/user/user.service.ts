@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserRepositoryService } from '../user.repository/user.repository.service';
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user-dto';
-import { UserDto } from '../types/UserDto';
 import { UserViewDto } from 'src/types/UserViewDto';
+import { UserDto } from '../../types/UserDto';
+import { UserRepository } from '../../repositories/user.repository';
 
 @Injectable()
 export class UserService {
-  constructor(readonly repository: UserRepositoryService) {}
+  constructor(readonly repository: UserRepository) {}
 
   async create(dto: CreateUserDto): Promise<UserDto> {
     return this.repository.createUser(dto);

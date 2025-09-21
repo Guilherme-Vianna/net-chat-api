@@ -1,12 +1,12 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from '../user/dto/create-user-dto';
-import { UpdateUserDto } from '../user/dto/update-user-dto';
 import { UserDto } from '../types/UserDto';
+import { CreateUserDto } from '../services/user/dto/create-user-dto';
+import { UpdateUserDto } from '../services/user/dto/update-user-dto';
 
 @Injectable()
-export class UserRepositoryService {
+export class UserRepository {
   constructor(readonly prismaService: PrismaService) {}
 
   async createUser(dto: CreateUserDto): Promise<UserDto> {
