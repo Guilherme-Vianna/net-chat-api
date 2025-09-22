@@ -41,6 +41,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     return new MessageViewDto(
+      message.id,
       message.text,
       message.user_id,
       message.user_id,

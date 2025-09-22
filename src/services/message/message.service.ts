@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageRepository } from 'src/repositories/message.repository';
 import { MessageViewDto } from 'src/types/MessageViewDto';
 import { ServiceResponseViewDto } from 'src/types/ServiceResponseViewDto';
@@ -22,6 +22,7 @@ export class MessageService {
     const messages = data.messages.map(
       (x) =>
         new MessageViewDto(
+          x.id,
           x.text,
           x.user_id,
           x.recipient_id,

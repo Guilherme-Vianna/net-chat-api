@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetMessageRepository } from 'src/types/GetMessageRepository';
+import { Validate } from 'class-validator';
 
 @Injectable()
 export class MessageRepository {
@@ -14,15 +15,15 @@ export class MessageRepository {
   ): Promise<GetMessageRepository> {
     const safePage = Math.max(1, page);
     const skip = (safePage - 1) * take;
-
+    const safeTake = Number(take);
     const where = { user_id: sender_id, recipient_id: dest_id };
 
     const [messages, total] = await Promise.all([
       this.prismaService.messages.findMany({
-        where,
-        skip,
-        take,
+        where: where,
         orderBy: { created_at: 'desc' },
+        take: safeTake,
+        skip: skip,
       }),
       this.prismaService.messages.count({ where }),
     ]);

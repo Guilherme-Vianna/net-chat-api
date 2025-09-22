@@ -1,4 +1,3 @@
-import { Prisma } from 'generated/prisma';
 import { GetMessagePrisma } from './GetMessagePrisma';
 
 export class GetMessageRepository {
