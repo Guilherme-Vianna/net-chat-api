@@ -1,6 +1,6 @@
 import type { Prisma } from 'generated/prisma';
 
-export type UserDto = Prisma.UsersGetPayload<{
+export type GetUserPrisma = Prisma.UsersGetPayload<{
   select: {
     id: true;
     email: true;

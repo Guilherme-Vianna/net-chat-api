@@ -12,7 +12,8 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user-dto';
 import { AuthGuard } from 'src/auth/jwt-auth.guard';
-import { UserDto } from 'src/types/UserDto';
+import { GetUserPrisma } from 'src/types/GetUserPrisma';
+import { UserViewDto } from '../../types/UserViewDto';
 
 @Controller('users')
 export class UserController {
@@ -20,23 +21,32 @@ export class UserController {
 
   @HttpCode(201)
   @Post()
-  create(@Body() dto: CreateUserDto): Promise<UserDto> {
-    return this.userService.create(dto);
+  async create(@Body() dto: CreateUserDto): Promise<UserViewDto> {
+    return await this.userService.create(dto);
   }
 
   @UseGuards(AuthGuard)
   @HttpCode(200)
   @Get(':id')
-  getById(@Param('id') id: string): Promise<any> {
-    return this.userService.getById(id);
+  async getById(@Param('id') id: string): Promise<UserViewDto> {
+    return await this.userService.getById(id);
   }
 
-  @UseGuards(AuthGuard)
   @HttpCode(200)
-  @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto): Promise<any> {
-    return this.userService.update(id, dto);
+  @Post('recover-password')
+  async resetPassword(): Promise<void> {
+    await this.userService.recoverPassword();
   }
+  //
+  // @UseGuards(AuthGuard)
+  // @HttpCode(200)
+  // @Put(':id')
+  // update(
+  //   @Param('id') id: string,
+  //   @Body() dto: UpdateUserDto,
+  // ): Promise<UserDto> {
+  //   return this.userService.update(id, dto);
+  // }
 
   // TODO: CONSTRUCT DELETE ROUTE
 }

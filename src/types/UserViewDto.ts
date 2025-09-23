@@ -1,8 +1,8 @@
 import type { Prisma } from 'generated/prisma';
-import { UserDto } from './UserDto';
+import { GetUserPrisma } from './GetUserPrisma';
 
 export class UserViewDto {
-  constructor(dto: UserDto) {
+  constructor(dto: GetUserPrisma) {
     this.id = dto.id;
     this.email = dto.email;
     this.name = dto.name;
