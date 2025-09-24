@@ -8,5 +8,6 @@ export type GetUserPrisma = Prisma.UsersGetPayload<{
     password_hash: true;
     created_at: true;
     updated_at: true;
+    UsersTags: true;
   };
 }>;

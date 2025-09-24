@@ -9,7 +9,7 @@ import { UpdateUserDto } from '../services/user/dto/update-user-dto';
 export class UserRepository {
   constructor(readonly prismaService: PrismaService) {}
 
-  async createUser(dto: CreateUserDto): Promise<GetUserPrisma> {
+  async createUser(dto: CreateUserDto): Promise<any> {
     const email = dto.email.toLowerCase().trim();
 
     const existing = await this.prismaService.users.findUnique({
@@ -22,20 +22,56 @@ export class UserRepository {
 
     const password_hash = await bcrypt.hash(dto.password, 12);
 
-    const user = await this.prismaService.users.create({
-      data: {
-        email,
-        password_hash,
-        name: dto.username,
-      },
-    });
+    return this.prismaService.$transaction(async (prisma) => {
+      const existingTags = await prisma.tags.findMany({
+        where: {
+          id: { in: dto.tags_ids },
+          is_deleted: false,
+        },
+      });
 
-    return user;
+      if (existingTags.length !== dto.tags_ids.length) {
+        throw new ConflictException('One or more tags do not exist');
+      }
+
+      const user = await prisma.users.create({
+        data: {
+          email,
+          password_hash,
+          name: dto.username,
+        },
+      });
+
+      await prisma.usersTags.createMany({
+        data: dto.tags_ids.map((tagId) => ({
+          user_id: user.id,
+          tag_id: tagId,
+        })),
+      });
+
+      return prisma.users.findUnique({
+        where: { id: user.id },
+        include: {
+          UsersTags: {
+            include: {
+              tag: true,
+            },
+          },
+        },
+      });
+    });
   }
 
   async getById(id: string): Promise<GetUserPrisma | null> {
     const search = await this.prismaService.users.findUnique({
       where: { id },
+      include: {
+        UsersTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
     });
 
     if (!search) {
@@ -55,6 +91,13 @@ export class UserRepository {
           { name: { startsWith: emailOrUsername } },
         ],
       },
+      include: {
+        UsersTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
     });
 
     if (!search) {
@@ -64,12 +107,58 @@ export class UserRepository {
     return search;
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<GetUserPrisma> {
-    const password_hash = await bcrypt.hash(dto.password, 12);
+  async update(id: string, dto: UpdateUserDto): Promise<any> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const password_hash = dto.password
+        ? await bcrypt.hash(dto.password, 12)
+        : undefined;
 
-    return this.prismaService.users.update({
-      where: { id },
-      data: { email: dto.email, password_hash },
+      const existingTags = await prisma.tags.findMany({
+        where: {
+          id: { in: dto.tags_ids },
+          is_deleted: false,
+        },
+      });
+
+      if (existingTags.length !== dto.tags_ids.length) {
+        throw new ConflictException('One or more tags do not exist');
+      }
+
+      await prisma.usersTags.deleteMany({
+        where: { user_id: id },
+      });
+
+      if (dto.tags_ids.length > 0) {
+        await prisma.usersTags.createMany({
+          data: dto.tags_ids.map((tagId) => ({
+            user_id: id,
+            tag_id: tagId,
+          })),
+        });
+      }
+
+      return prisma.users.update({
+        where: { id },
+        data: {
+          password_hash: password_hash,
+          ...(dto.email && { email: dto.email }),
+        },
+        include: {
+          UsersTags: {
+            include: {
+              tag: true,
+            },
+          },
+        },
+      });
+    });
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prismaService.users.delete({
+      where: {
+        id,
+      },
     });
   }
 }
